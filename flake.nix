@@ -9,8 +9,10 @@
   outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
-        config.allowUnfree = true;
+        pkgs = import nixpkgs {
+            inherit system;
+            config.allowUnfree = true;
+        };
       in {
         packages = {
         #   default = pkgs.ollama;
