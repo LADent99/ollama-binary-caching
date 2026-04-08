@@ -12,7 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
-      contents: read
+      contents: write
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@v4
@@ -22,6 +23,9 @@ jobs:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           extra_nix_config: |
             system-features = nixos-test benchmark big-parallel
+
+      - name: Update flakes
+        run: nix flake update
 
       - uses: cachix/cachix-action@v15
         with:
@@ -33,3 +37,24 @@ jobs:
 
       - name: Push to Cachix
         run: nix-store --query --requisites ./result | cachix push ladent
+
+      # 4. Commit the updated flake.lock so the pin is preserved
+      - name: Commit updated flake.lock
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add flake.lock
+          git diff --staged --quiet || git commit -m "chore: update flake.lock"
+          git push
+
+      - name: Notify on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `Cache build failed: ${new Date().toISOString()}`,
+              body: `Check the [workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}).`
+            })
