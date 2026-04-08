@@ -32,13 +32,13 @@ jobs:
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
       
       - name: Update flakes
-        run: nix flake update && ls && pwd
+        run: nix flake update
       
       - name: Build ollama
-        run: nix build .#default --print-build-logs --refresh && ls
+        run: nix build .#default --print-build-logs --refresh --option narinfo-cache-negative-ttl 0 --option narinfo-cache-positive-ttl 0 --no-registries
 
       - name: Push to Cachix
-        run: nix-store --query --requisites ./result | cachix push ladent && ls
+        run: nix-store --query --requisites ./result | cachix push ladent
 
       - name: Check if flake.lock changed
         id: flake-lock-changed
@@ -50,7 +50,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: steps.flake-lock-changed.outputs.changed == 'true'
         run: |
-          ls
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git switch -c update-flake-lock-${{ github.run_id }}
