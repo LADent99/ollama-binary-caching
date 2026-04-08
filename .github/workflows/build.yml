@@ -40,7 +40,13 @@ jobs:
       - name: Push to Cachix
         run: nix-store --query --requisites ./result | cachix push ladent && ls
 
+      - name: Check if flake.lock changed
+        id: flake-lock-changed
+        run: |
+          git diff --quiet flake.lock && echo "changed=false" >> $GITHUB_OUTPUT || echo "changed=true" >> $GITHUB_OUTPUT
+
       - name: Commit updated flake.lock to branch
+        if: steps.flake-lock-changed.outputs.changed == 'true'
         run: |
           ls
           git config user.name  "github-actions[bot]"
@@ -51,12 +57,14 @@ jobs:
           git push origin update-flake-lock-${{ github.run_id }}
 
       - uses: peter-evans/create-pull-request@v6
+        if: steps.flake-lock-changed.outputs.changed == 'true'
         with:
           branch: update-flake-lock-${{ github.run_id }}
           title: "Weekly flake.lock update"
           body: |
             Automated weekly update of flake inputs.
           base: main
+          app-paths: flake.lock
 
       - name: Notify on failure
         if: failure()
