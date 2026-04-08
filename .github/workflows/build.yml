@@ -46,6 +46,8 @@ jobs:
           git diff --quiet flake.lock && echo "changed=false" >> $GITHUB_OUTPUT || echo "changed=true" >> $GITHUB_OUTPUT
 
       - name: Commit updated flake.lock to branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         if: steps.flake-lock-changed.outputs.changed == 'true'
         run: |
           ls
