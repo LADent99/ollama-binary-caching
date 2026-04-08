@@ -54,17 +54,12 @@ jobs:
           git switch -c update-flake-lock-${{ github.run_id }}
           git add flake.lock
           git commit -m "chore: update flake.lock"
-          git push origin update-flake-lock-${{ github.run_id }}
-
-      - uses: peter-evans/create-pull-request@v6
-        if: steps.flake-lock-changed.outputs.changed == 'true'
-        with:
-          branch: update-flake-lock-${{ github.run_id }}
-          title: "Weekly flake.lock update"
-          body: |
-            Automated weekly update of flake inputs.
-          base: main
-          app-paths: flake.lock
+          git push --set-upstream origin update-flake-lock-${{ github.run_id }}
+          gh pr create \
+            --title "Weekly flake.lock update" \
+            --body "Automated weekly update of flake inputs." \
+            --base main \
+            --head update-flake-lock-${{ github.run_id }}
 
       - name: Notify on failure
         if: failure()
