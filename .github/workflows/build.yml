@@ -32,4 +32,4 @@ jobs:
         run: nix build .#default --print-build-logs
 
       - name: Push to Cachix
-        run: cachix push ladent ./result
+        run: nix-store --query --requisites ./result | cachix push ladent
