@@ -23,14 +23,15 @@ jobs:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
           extra_nix_config: |
             system-features = nixos-test benchmark big-parallel
-
+      
       - name: Update flakes
         run: nix flake update
 
       - uses: cachix/cachix-action@v15
         with:
-          name: ladent          # <-- your cache name
+          name: ladent
           authToken: ${{ secrets.CACHIX_AUTH_TOKEN }}
+      
 
       - name: Build ollama
         run: nix build .#default --print-build-logs
@@ -38,14 +39,24 @@ jobs:
       - name: Push to Cachix
         run: nix-store --query --requisites ./result | cachix push ladent
 
-      # 4. Commit the updated flake.lock so the pin is preserved
-      - name: Commit updated flake.lock
+      - name: Commit updated flake.lock to branch
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b update-flake-lock-${{ github.run_id }}
           git add flake.lock
           git diff --staged --quiet || git commit -m "chore: update flake.lock"
-          git push
+          git push origin update-flake-lock-${{ github.run_id }}
+
+      - uses: peter-evans/create-pull-request@v6
+        with:
+          branch: update-flake-lock-${{ github.run_id }}
+          title: "Weekly flake.lock update"
+          body: |
+            Automated weekly update of flake inputs.
+            Ollama has been pre-built and pushed to Cachix against this exact lock file.
+            Safe to merge — binary is already cached.
+          base: main
 
       - name: Notify on failure
         if: failure()
