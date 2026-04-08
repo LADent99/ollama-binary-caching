@@ -33,7 +33,7 @@ jobs:
         run: nix flake update
 
       - name: Build ollama
-        run: nix build .#default --print-build-logs
+        run: nix build .#default --print-build-logs --refresh
 
       - name: Push to Cachix
         run: nix-store --query --requisites ./result | cachix push ladent
