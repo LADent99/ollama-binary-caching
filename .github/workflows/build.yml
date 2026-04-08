@@ -42,9 +42,9 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout -b update-flake-lock-${{ github.run_id }}
+          git switch -c update-flake-lock-${{ github.run_id }}
           git add flake.lock
-          git diff --staged --quiet || git commit -m "chore: update flake.lock"
+          git commit -m "chore: update flake.lock"
           git push origin update-flake-lock-${{ github.run_id }}
 
       - uses: peter-evans/create-pull-request@v6
@@ -53,8 +53,6 @@ jobs:
           title: "Weekly flake.lock update"
           body: |
             Automated weekly update of flake inputs.
-            Ollama has been pre-built and pushed to Cachix against this exact lock file.
-            Safe to merge — binary is already cached.
           base: main
 
       - name: Notify on failure
